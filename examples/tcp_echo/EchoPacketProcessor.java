@@ -11,12 +11,7 @@ import com.ramshteks.nimble.plugins.net.TcpConnectionInfo;
 
 
 public class EchoPacketProcessor extends PacketProcessor {
-	public static final IPacketProcessorFactory factory = new IPacketProcessorFactory() {
-		@Override
-		public PacketProcessor createNewInstance(TcpConnectionInfo connectionInfo) {
-			return new EchoPacketProcessor();
-		}
-	};
+	public static final IPacketProcessorFactory factory = connectionInfo -> new EchoPacketProcessor();
 
 	public EchoPacketProcessor() {
 		super();
