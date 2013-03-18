@@ -1,0 +1,11 @@
+Plugins for nimble project
+
+Requirments:
+* java 8
+
+
+Plugins:
+* Tcp server
+* Server statistcis
+* Logger
+* Example
