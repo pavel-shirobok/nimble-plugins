@@ -29,6 +29,7 @@ public class EchoPacketProcessor extends PacketProcessor {
 
 	public  static byte[] getUTFStringBytes(String string){
 		byte[] say_bytes = null;
+		//noinspection EmptyCatchBlock
 		try{
 			say_bytes = string.getBytes("UTF-8");
 		}catch (Exception e){}

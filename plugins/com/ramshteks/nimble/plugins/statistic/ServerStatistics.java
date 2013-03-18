@@ -1,5 +1,6 @@
 package com.ramshteks.nimble.plugins.statistic;
 
+import com.ramshteks.lambda.LambdaMap;
 import com.ramshteks.nimble.Event;
 import com.ramshteks.nimble.EventIO;
 import com.ramshteks.nimble.NimbleEvent;
@@ -28,37 +29,57 @@ public class ServerStatistics implements EventIO.EventReceiver {
 
 	private long lastLoopTime = System.currentTimeMillis();
 
+	private LambdaMap<Integer, EventIO.EventHandler> eventHandlers;
+
+	public ServerStatistics() {
+		eventHandlers = new LambdaMap<>((Event e)->{});
+		eventHandlers.add(Event.getHashCodeOfEventType(NimbleEvent.LOOP_START), this::onLoopStart);
+		eventHandlers.add(Event.getHashCodeOfEventType(NimbleEvent.LOOP_END), this::onLoopEnd);
+		eventHandlers.add(Event.getHashCodeOfEventType(TcpPacketEvent.TCP_PACKET_SEND), this::onPacketSend);
+		eventHandlers.add(Event.getHashCodeOfEventType(TcpPacketEvent.TCP_PACKET_RECEIVE), this::onPacketReceive);
+		eventHandlers.add(Event.getHashCodeOfEventType(TcpConnectionEvent.CONNECT), this::onConnect);
+		eventHandlers.add(Event.getHashCodeOfEventType(TcpConnectionEvent.DISCONNECT), this::onDisconnect);
+
+	}
+
+	private void onLoopStart(Event event){
+		long newTime = System.currentTimeMillis();
+		loopStartTime = newTime;
+		loopCount++;
+		if(newTime - lastLoopTime > 2000){
+			printStatistics();
+			clear();
+			lastLoopTime = newTime;
+		}
+	}
+
+	private void onLoopEnd(Event event){
+		accumLoopTime+=System.currentTimeMillis() - loopStartTime;
+	}
+
+	private void onPacketSend(Event packetEvent){
+		sendPackets++;
+		totalSendedPackets++;
+	}
+
+	private void onPacketReceive(Event packetEvent){
+		receivedPackets++;
+		totalReceivedPackets++;
+	}
+
+	private void onConnect(Event packetEvent){
+		newConnectionCount++;
+		totalConnectionsCount++;
+	}
+
+	private void onDisconnect(Event packetEvent){
+		disconnectedCount++;
+		totalConnectionsCount--;
+	}
+
 	@Override
 	public void pushEvent(Event event) {
-		if(Event.equalHash(event, NimbleEvent.LOOP_START)){
-			long newTime = System.currentTimeMillis();
-			loopStartTime = newTime;
-			loopCount++;
-			if(newTime - lastLoopTime > 2000){
-				printStatistics();
-				clear();
-				lastLoopTime = newTime;
-			}
-		}
-		if(Event.equalHash(event, NimbleEvent.LOOP_END)){
-			accumLoopTime+=System.currentTimeMillis() - loopStartTime;
-		}
-		if(Event.equalHash(event, TcpPacketEvent.TCP_PACKET_SEND)){
-			sendPackets++;
-			totalSendedPackets++;
-		}
-		if(Event.equalHash(event, TcpPacketEvent.TCP_PACKET_RECEIVE)){
-			receivedPackets++;
-			totalReceivedPackets++;
-		}
-		if(Event.equalHash(event, TcpConnectionEvent.CONNECT)){
-			newConnectionCount++;
-			totalConnectionsCount++;
-		}
-		if(Event.equalHash(event, TcpConnectionEvent.DISCONNECT)){
-			disconnectedCount++;
-			totalConnectionsCount--;
-		}
+		eventHandlers.get(event.eventTypeHashCode()).handle(event);
 	}
 
 	private void clear() {
