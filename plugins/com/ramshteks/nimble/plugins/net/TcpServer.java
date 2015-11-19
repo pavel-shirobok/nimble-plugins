@@ -48,10 +48,11 @@ public class TcpServer implements EventIO.EventFull {
 	public void pushEvent(Event event) {
 		if(Event.equalHash(event, NimbleEvent.ENTER_IN_QUEUE)){
 			for(TcpReceptor tcpReceptor: receptors){
+				System.out.println("Receptor");
 				try{
 					tcpReceptor.startBinding();
 				}catch (IOException ioException){
-					//TODO:
+					ioException.printStackTrace();
 				}
 			}
 		}
